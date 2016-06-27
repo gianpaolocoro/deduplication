@@ -1,0 +1,13 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+Deduplication.Rproj
+aggregateclusters.R
+aggregateclusters2.R
+aggregateclusters3.R
+aggregateclusters4.R
+aggregateclusters5.R
+clusters.csv.tgz
+datasetNA_noland.csv
+gitconfig
