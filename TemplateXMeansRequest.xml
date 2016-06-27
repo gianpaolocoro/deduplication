@@ -1,0 +1,57 @@
+<Execute service="WPS" version="1.0.0" xmlns="http://www.opengis.net/wps/1.0.0" xmlns:ns="http://www.opengis.net/ows/1.1" xmlns:xlin="http://www.w3.org/1999/xlink">
+  <ns:Identifier>org.gcube.dataanalysis.wps.statisticalmanager.synchserver.mappedclasses.clusterers.XMEANS</ns:Identifier>
+  <DataInputs>
+    <Input>
+      <ns:Identifier>OccurrencePointsTable</ns:Identifier>
+        <Data>
+		  <ComplexData mimeType="text/csv">#FILE#</ComplexData>
+      	</Data>
+    </Input>
+    <Input>
+      <ns:Identifier>FeaturesColumnNames</ns:Identifier>
+      <Data>
+        <LiteralData dataType="xs:string">#FEATURES#</LiteralData>
+      </Data>
+    </Input>
+    <Input>
+      <ns:Identifier>OccurrencePointsClusterLabel</ns:Identifier>
+      <Data>
+        <LiteralData dataType="xs:string">xmeans</LiteralData>
+      </Data>
+    </Input>
+    <Input>
+      <ns:Identifier>maxIterations</ns:Identifier>
+      <Data>
+        <LiteralData dataType="xs:int">#MAXITERATIONS#</LiteralData>
+      </Data>
+    </Input>
+    <Input>
+      <ns:Identifier>minClusters</ns:Identifier>
+      <Data>
+        <LiteralData dataType="xs:int">#MINCLUSTERS#</LiteralData>
+      </Data>
+    </Input>
+	<Input>
+      <ns:Identifier>maxClusters</ns:Identifier>
+      <Data>
+        <LiteralData dataType="xs:int">#MAXCLUSTERS#</LiteralData>
+      </Data>
+    </Input>
+	<Input>
+      <ns:Identifier>min_points</ns:Identifier>
+      <Data>
+        <LiteralData dataType="xs:int">#MINPOINTS#</LiteralData>
+      </Data>
+    </Input>
+  </DataInputs>
+  <ResponseForm>
+     <ResponseDocument storeExecuteResponse="true" lineage="true" status="true">
+      <Output>
+        <ows:Identifier xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">OutputTable</ows:Identifier>
+      </Output>
+      <Output>
+        <ows:Identifier xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">non_deterministic_output</ows:Identifier>
+      </Output>
+    </ResponseDocument>
+  </ResponseForm>
+</Execute>
