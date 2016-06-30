@@ -3,7 +3,8 @@ require('stringr')
 source("WPS4D4Science.r")
 
 #INPUT PARAMETERS
-inputfile<-"corog.csv"
+#inputfile<-"corog.csv"
+inputfile<-"samples/rossia_adj.csv"
 #inputfile<-"manghip.csv"
 featuresString<-""
 maxiterations<-10000
@@ -95,7 +96,7 @@ closeAllConnections()
 con <- textConnection(as.character(output$Value)[1])
 dataClustered <- read.csv(con)
 #View(dataClustered)
-View(cbind(dataClustered["clusterid"],dataClustered["outlier"]))
+#View(cbind(dataClustered["clusterid"],dataClustered["outlier"]))
 
 ncols = dim(dataClustered)[2]
 clustersdistr<-(dataClustered[,ncols-1])

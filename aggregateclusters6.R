@@ -66,7 +66,7 @@ for(i in 1:nrows){
   }
 }
 
-View(distances)
+#View(distances)
 cat("outliers detection\n")
 min_na<-2
 similarSafe<-function(distances,i,exclude){
@@ -146,3 +146,14 @@ print("*************")
 print("unique clusters and outliers")
 print(uniqueClusters)
 cat("number of found clusters",length(uniqueClusters))
+
+output<-paste()
+for (i in 1:length(uniqueClusters)){
+  output<-paste(output,"Cluster ",i,"\n",sep="")
+  a<-paste(as.character(uniqueClusters[[i]]), collapse=",")
+  output<-paste(output,a,"\n",sep="")
+}
+
+output_namefile_random <- paste("clusters_",inputfile,"_.txt",sep="")
+
+write(x=output,file=output_namefile_random, append=F)
