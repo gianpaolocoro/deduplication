@@ -216,17 +216,20 @@ aggregateClusters<-function(data,dataClustered){
       
       
       if (length(similar)>0){
-        cat("checking",i," ")
+        #cat("checking",i," ")
         for(j in similar){
           if (!(j %in% exclude)){
             exclude[length(exclude)+1]<-i
-            cat("->againsts",j," ")
+            exclude[length(exclude)+1]<-j
+            #cat("->againsts",j," ")
             safe<-similarSafe(distances,j,exclude)
             if (safe[1]){
-              cat("->SAFE!"," \n")
+              #cat("->SAFE!"," \n")
               return (c(TRUE,j))
             }
-            else{cat("->UNSAFE"," \n")}
+            else{
+              #cat("->UNSAFE"," \n")
+              }
           }
         }
       }
@@ -244,7 +247,9 @@ aggregateClusters<-function(data,dataClustered){
   cat("non-outliers assignment to the clusters\n")
   outliers<-array()
   for(i in 1:nrows){
+    cat("->check safe",i," \n")
     safe<-similarSafe(distances,i,c())
+    cat("->check ",i,safe[1]," \n")
     if (safe[1]==0){
       cat("detected outlier:",i," \n")
       #print(data[i,which(data[i,]!=0)])
@@ -298,7 +303,7 @@ mergeClusters<-function(clusters_aggregations_of_data){
   print("*************")
   print("unique clusters and outliers")
   print(uniqueClusters)
-  cat("number of found clusters",length(uniqueClusters))
+  cat("number of found clusters",length(uniqueClusters),"\n")
   
   cat("Finished Step 3 - Merging clusters\n")
   return (uniqueClusters)
@@ -324,44 +329,13 @@ inputfile="clusters/corog.csv"
 #inputfile="clusters/arossi.csv"
 data<-prepareInput(inputfile = inputfile)
 
-if (dim(data)[2]<150){
+if (dim(data)[2]<50){
   #data<-prepareInput(inputfile = "corog.csv")
   densityClusters<-densityClustering(data=data,wps_uri,username,token)
   aggregatedClusters<-aggregateClusters(data=data,dataClustered=densityClusters)
   mergedClusters<-mergeClusters(clusters_aggregations_of_data=aggregatedClusters)
   mergedClustersString<-mergedClustersToString(uniqueClusters=mergedClusters)
 } else {
-  n_columns=10
-  total_cols<-dim(data)[2]
-  total_raws<-dim(data)[1]
-  
-  prob_per_row<-array()
-  for (i in 1:total_raws) {
-    row<-data[i,]
-    pr<-n_columns*length(row[row==1])/total_cols
-    prob_per_row<-c(prob_per_row,pr)
-  }
-  prob_per_row<-prob_per_row[!is.na(prob_per_row)]
-  
-  P<-prod(prob_per_row)
-  #P<-mean(prob_per_row)
-  
-  n_trials= floor(0.5/P)
-  
-  coln<-colnames(data)
-  
-  for (i in 1:n_trials){
-    samplecolumns<-sample(2:dim(data)[2], n_columns, replace=FALSE)
-    columnsToSelect<-c("k",coln[samplecolumns])
-    subdata<-data[ , (names(data) %in% columnsToSelect)]
-    toremove<-array()
-    for (j in 1:total_raws){
-      if (length(which(subdata[j,]==0))==n_columns){
-        cat("inserting ",j,"at place",length(toremove),"\n")
-        toremove[length(toremove)+1]<-j
-      }
-    }
-    subdatarem<-subdata[-toremove[!is.na(toremove)],]
-  }
+ source("columnsselection.R")
 }
 #data[19,which(data[19,]!=0)]  
