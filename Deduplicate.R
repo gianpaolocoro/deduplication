@@ -26,7 +26,14 @@ densityClustering<-function(data,wps_uri,username,token){
   cat("Step 1 - Density clustering\n")
   featuresString<-""
   maxiterations<-10000
-  epsilon<-3
+  if (dim(data)[2]<140){
+    epsilon<-1
+    cat("using epsilon",epsilon,"\n")
+  }
+  else{
+    epsilon<-3
+    cat("using epsilon",epsilon,"\n")
+  }
   min_points<-1
   
   #wps_uri = "http://dataminer1-d-d4s.d4science.org:80/wps/WebProcessingService"
@@ -324,8 +331,9 @@ mergedClustersToString<-function(uniqueClusters){
 wps_uri = "http://dataminer1-d-d4s.d4science.org:80/wps/WebProcessingService"
 username="statistical.wps"
 token="45943442-74ef-408b-be64-d26b42cf4c08" 
-inputfile="clusters/corog.csv"
-#inputfile="clusters/gcoro.csv"
+#inputfile="clusters/corog.csv"
+#inputfile="manghip.csv"
+inputfile="clusters/gcoro.csv"
 #inputfile="clusters/arossi.csv"
 data<-prepareInput(inputfile = inputfile)
 
