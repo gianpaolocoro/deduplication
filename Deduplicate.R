@@ -75,7 +75,7 @@ densityClustering<-function(data,wps_uri,username,token){
   filehandle <- file(filexml)
   write(filexml, file = sentfile,sep = "")
   close(filehandle)
-  
+  cat("Clustering")
   #SEND THE REQUEST#  
   out<-POST(url = wps_uri, config=c(authenticate(username, token, type = "basic")),body = upload_file(sentfile, type="text/xml"),encode = c("multipart"), handle = NULL)
   
@@ -85,28 +85,29 @@ densityClustering<-function(data,wps_uri,username,token){
   
   #GET THE STATUS LOCATION FROM THE ACCEPTANCE RESPONSE#
   lout<-as.character(out)
-  print(lout)
+  #print(lout)
   statusLocation='statusLocation=\"'
   endstatusLocation='">\n'
   pos1 = regexpr(statusLocation, lout)
   pos2 = regexpr(endstatusLocation, lout)
   llout<-substr(lout, pos1+nchar(statusLocation), pos2-1)
-  print(llout)
+  #print(llout)
   
   #CHECK THE STATUS OF THE COMPUTATION UNTIL COMPLETION#
   while (!stop_condition_fail && !stop_condition_success){
-    print("Checking...")
+    cat(".")
     #CHECK THE STATUS URL#
     out1<-GET(url = llout, config=c(authenticate(username, token, type = "basic")),handle = NULL, timeout(3600))
-    print(as.character(out1))
+    #print(as.character(out1))
     stop_condition_success<-grepl("ProcessSucceeded",as.character(out1))
     stop_condition_fail<-grepl("Exception",as.character(out1))
     #SLEEP FOR 10 SECONDS BEFORE THE NEXT CHECK#
     Sys.sleep(2)
   }
   
-  print(as.character(out1))
+  #print(as.character(out1))
   if (stop_condition_success){
+    cat("finished\n")
     #PARSE THE OUTPUT IN THE CASE OF SUCCESS
     wps.output<-parseResponse(response=out1)
     output<-as.data.frame(wps.output)
@@ -129,12 +130,15 @@ densityClustering<-function(data,wps_uri,username,token){
   cat("Link to output:",as.character(output["Value"][[1]][2]),"\n")
   cat("Computation finished\n")
   
+  file.remove(sentfile, showWarnings = FALSE)
+  file.remove(dffile, showWarnings = FALSE)
+  
   cat("Finished Step 1 - Density clustering\n")
   
   return(dataClustered)
 }
 
-aggregateClusters<-function(data,dataClustered){
+calculateSimilarities<-function(data,dataClustered){
   
   
   cat("Step 2 - Aggregating clusters\n")
@@ -144,18 +148,17 @@ aggregateClusters<-function(data,dataClustered){
   nclusteridx<-dim(clusteridx)[1]
   cols<-dim(dataClustered)[2]
   nrows<-dim(dataClustered)[1]
-  cluster_assignment<-(dataClustered[cols-1])[[1]]
   
   column_centroids = matrix(NA,nrow=nrows,ncol=(ncols-2))
   distances = matrix(NA,nrow=nrows,ncol=nrows)
-  clusters_aggregations_of_data<-list()
+  
   cat("Preparing clusters means and original clusters\n")
   for(i in 1:nclusteridx){
     #for(i in 3:3){
     idx<-clusteridx[[1]][i]
     
     w<-which(dataClustered["clusterid"]==idx)
-    clusters_aggregations_of_data<-c(clusters_aggregations_of_data, list(w))
+  
     #cat("w",w,"\n")
     subcluster<-dataClustered[w,1:(cols-2)]
     cm<-colMeans(subcluster)
@@ -174,16 +177,19 @@ aggregateClusters<-function(data,dataClustered){
   cat("Calculating similarities between vectors\n")
   for(i in 1:nrows){
     a<-column_centroids[i,]
-    max<-2*sqrt(sum((a*2)^2))
-    cat("\n",i,"vs ")
+    max1<-2*sqrt(sum((a*2)^2))
+    #cat("\n",i,"vs ")
     for(j in 1:nrows){
-      cat(j)
+      #cat(j)
       d<-NULL
       b<-column_centroids[j,]
       maxinter = which(data[i,]==1)
       intersection<-length(which((data[i,]==data[j,] & data[j,]==1)==T))
       d<-sqrt(sum((a-b)^2))
-      d<-d*100/max
+      #max2<-sqrt(sum((b*2)^2))
+      #maxd<-max(max1,max2)
+      maxd<-max1
+      d<-d*100/maxd
       if (intersection>=min_intersections){
         #exact match 
       } else{ 
@@ -210,7 +216,27 @@ aggregateClusters<-function(data,dataClustered){
     }
   }
   cat("\n")
-  #View(distances)
+  
+  return (distances)
+}
+
+aggregateClusters<-function(distances,dataClustered){
+  
+  ncols = dim(dataClustered)[2]
+  clusteridx<-unique(dataClustered["clusterid"])
+  nclusteridx<-dim(clusteridx)[1]
+  cols<-dim(dataClustered)[2]
+  nrows<-dim(dataClustered)[1]
+  cluster_assignment<-(dataClustered[cols-1])[[1]]
+  
+  clusters_aggregations_of_data<-list()
+  cat("Preparing clusters means and original clusters\n")
+  for(i in 1:nclusteridx){
+    idx<-clusteridx[[1]][i]
+    w<-which(dataClustered["clusterid"]==idx)
+    clusters_aggregations_of_data<-c(clusters_aggregations_of_data, list(w))
+  }
+  
   cat("outliers detection\n")
   min_na<-2
   similarSafe<-function(distances,i,exclude){
@@ -254,9 +280,9 @@ aggregateClusters<-function(data,dataClustered){
   cat("non-outliers assignment to the clusters\n")
   outliers<-array()
   for(i in 1:nrows){
-    cat("->check safe",i," \n")
+    #cat("->check safe",i," \n")
     safe<-similarSafe(distances,i,c())
-    cat("->check ",i,safe[1]," \n")
+    #cat("->check ",i,safe[1]," \n")
     if (safe[1]==0){
       cat("detected outlier:",i," \n")
       #print(data[i,which(data[i,]!=0)])
@@ -332,18 +358,40 @@ wps_uri = "http://dataminer1-d-d4s.d4science.org:80/wps/WebProcessingService"
 username="statistical.wps"
 token="45943442-74ef-408b-be64-d26b42cf4c08" 
 #inputfile="clusters/corog.csv"
-#inputfile="manghip.csv"
-inputfile="clusters/gcoro.csv"
+#inputfile="clusters/gcoro.csv"
 #inputfile="clusters/arossi.csv"
-data<-prepareInput(inputfile = inputfile)
+inputfile="clusters/shibatat.csv"
+inputfile="clusters/rossia.csv"
+inputfile="clusters/aabdul.csv"
 
-if (dim(data)[2]<50){
+#inputfiles = c("clusters/corog.csv","clusters/gcoro.csv","clusters/arossi.csv","clusters/shibatat.csv","clusters/rossia.csv","clusters/aabdul.csv","clusters/ioannidisy.csv","clusters/manolan.csv","clusters/manghip.csv")
+#inputfiles = c("clusters/gcoro.csv")
+#inputfiles = c("clusters/corog.csv")
+#inputfiles = c("clusters/ioannidisy.csv")
+inputfiles = c("clusters/corog.csv")
+
+for (i in 1:length(inputfiles)){
+  inputfile = inputfiles[i]
+  cat("\n*****PROCESSING ",inputfile,"\n")
+data<-prepareInput(inputfile = inputfile)
+if (dim(data)[2]<250){
   #data<-prepareInput(inputfile = "corog.csv")
   densityClusters<-densityClustering(data=data,wps_uri,username,token)
-  aggregatedClusters<-aggregateClusters(data=data,dataClustered=densityClusters)
+  similarities<-calculateSimilarities(data=data,dataClustered=densityClusters)
+  aggregatedClusters<-aggregateClusters(distances=similarities,dataClustered=densityClusters)
   mergedClusters<-mergeClusters(clusters_aggregations_of_data=aggregatedClusters)
   mergedClustersString<-mergedClustersToString(uniqueClusters=mergedClusters)
-} else {
- source("columnsselection.R")
+  output_namefile_random <- paste("clusters_",strsplit(inputfile, "/")[[1]][2],"_.txt",sep="")
+  cat("writing output in",output_namefile_random)
+  write(x=mergedClustersString,file=output_namefile_random, append=F)
+  
+  } else {
+  source("aggregateclusters7.R")
 }
+
+
+cat("\n*****FINISHED PROCESSING",inputfile,"\n")
+}
+
+#for checks
 #data[19,which(data[19,]!=0)]  

@@ -23,7 +23,7 @@ getCapabilities <- function(wps_uri, username, token){
   #get the URL with user and token
   got<-GET(wpsService,authenticate(username,token), timeout(1*3600))
   #parse the tree
-  xmlfile <- xmlTreeParse(got)
+  xmlfile <- xmlTreeParse(got,encoding="UTF-8")
   class(xmlfile)
   #get the root of the tree
   xmltop = xmlRoot(xmlfile)

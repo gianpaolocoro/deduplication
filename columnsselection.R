@@ -1,6 +1,6 @@
 total_cols<-dim(data)[2]
 total_rows<-dim(data)[1]
-columnsWindow=10
+columnsWindow=100
 n_columns=min(columnsWindow,total_cols-1)
 
 prob_per_row<-array()
@@ -8,6 +8,7 @@ for (i in 1:total_rows) {
   row<-data[i,]
   pr<-n_columns*length(row[row==1])/total_cols
   pr<-min(pr,0.9)
+  
   prob_per_row<-c(prob_per_row,pr)
 }
 prob_per_row<-prob_per_row[!is.na(prob_per_row)]
@@ -17,7 +18,8 @@ P<-prod(prob_per_row)
 #P<-mean(prob_per_row)
 #P<-(P^(total_rows/5))
 
-n_trials= round(1.1/P)
+n_trials= round(1/(P^(1/total_rows)))
+n_trials = n_trials * 3 #increase the variety
 
 cat("Number of trials",n_trials,"\n")
 coln<-colnames(data)

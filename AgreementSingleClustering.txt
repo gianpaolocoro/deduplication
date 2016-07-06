@@ -1,0 +1,8 @@
+Agreement
+7+6+20+35+25
+
+Disagreement
+3
+
+Accuracy
+96.9%
